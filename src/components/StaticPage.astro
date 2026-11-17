@@ -1,0 +1,53 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHeader from './PageHeader.astro';
+import { pageSchema, pageSeo, site, withoutOutro } from '../lib/content';
+import type { PageKey } from '../lib/content';
+import { optimizeHtml, responsive } from '../lib/images';
+
+interface Props {
+  pageKey: PageKey;
+  /** Small line above the title. */
+  eyebrow?: string;
+  /** Picture shown beside the title; defaults to the page's own image. */
+  heroImage?: { src: string; alt: string };
+}
+const { pageKey, eyebrow, heroImage } = Astro.props;
+const page = site.pages[pageKey];
+const seo = pageSeo[pageKey];
+const content = await optimizeHtml(withoutOutro(page.content), page.title);
+const hero = heroImage ?? (page.image ? { src: page.image.src, alt: page.image.alt || page.title } : null);
+const picture = await responsive(hero?.src, 1200);
+---
+
+<Base
+  title={seo.title}
+  description={seo.description}
+  image={page.image?.src}
+  imageAlt={page.image?.alt}
+  type={pageKey === 'about' ? 'profile' : 'website'}
+  schema={[pageSchema(pageKey)]}
+>
+  <article>
+    <div class:list={['page-intro', { 'has-image': picture }]}>
+      <PageHeader title={page.title} eyebrow={eyebrow ? [{ label: eyebrow }] : []} />
+      {
+        picture && (
+          <figure class="page-intro-image section-inner">
+            <img
+              src={picture.src}
+              srcset={picture.srcset}
+              sizes="(min-width: 1000px) 40vw, 90vw"
+              width={picture.width}
+              height={picture.height}
+              alt={hero?.alt}
+              fetchpriority="high"
+              decoding="async"
+            />
+          </figure>
+        )
+      }
+    </div>
+    <div class="entry-content" set:html={content} />
+  </article>
+</Base>

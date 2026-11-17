@@ -1,0 +1,5 @@
+node_modules/
+dist/
+.astro/
+backup_marichoo_wordpress_2024-06-03/
+.wrangler/

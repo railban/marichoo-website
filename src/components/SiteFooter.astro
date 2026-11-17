@@ -1,0 +1,66 @@
+---
+import SocialLinks from './SocialLinks.astro';
+import { cleanPath, emailLink, nav, person, SITE_NAME, tagCloud } from '../lib/content';
+
+const path = cleanPath(Astro.url.pathname);
+function active(href: string) {
+  if (href === '/') return path === '/';
+  return path === href || path.startsWith(`${href}/`);
+}
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  {
+    path !== '/contact' && (
+      <section class="footer-cta section-inner" aria-labelledby="footer-cta-title">
+        <p class="eyebrow">Let’s work together</p>
+        <h2 id="footer-cta-title" class="footer-cta-title">
+          Have a story that needs drawing? <a href={emailLink}>{person.email}</a>
+        </h2>
+        <p class="footer-cta-text">Editorial, fashion and book illustration, branding and print. Based in Croatia, working with clients worldwide.</p>
+      </section>
+    )
+  }
+
+  <div class="footer-grid section-inner">
+    <nav aria-label="Footer">
+      <h2 class="footer-heading">Pages</h2>
+      <ul class="footer-menu">
+        {
+          nav.map((item) => (
+            <li>
+              <a href={item.href} aria-current={active(item.href) ? 'page' : undefined}>
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+    <nav aria-label="Themes">
+      <h2 class="footer-heading">Themes</h2>
+      <ul class="footer-themes">
+        {
+          tagCloud.map((tag) => (
+            <li>
+              <a href={`/tag/${tag.slug}`} aria-label={`${tag.name} (${tag.count} items)`}>
+                {tag.name}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+    <div>
+      <h2 class="footer-heading">Follow</h2>
+      <SocialLinks label="Social links" />
+    </div>
+  </div>
+
+  <div class="footer-credits section-inner">
+    <p>&copy; {year} <a href="/">{SITE_NAME}</a> · {person.name}</p>
+    <p>Website by <a href="https://tin-banozic.from.hr/" target="_blank" rel="noopener">Tin Banožić</a></p>
+    <a class="to-the-top" href="#site-header">Back to top <span aria-hidden="true">&uarr;</span></a>
+  </div>
+</footer>

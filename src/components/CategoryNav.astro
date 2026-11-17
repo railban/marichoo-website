@@ -1,0 +1,26 @@
+---
+import { categories, projectsInCategory, site } from '../lib/content';
+
+interface Props {
+  /** The category being shown; leave out on the portfolio overview. */
+  current?: string;
+}
+const { current } = Astro.props;
+---
+
+<nav class="category-nav rise" style="--i: 3" aria-label="Portfolio sections">
+  <ul>
+    <li>
+      <a href="/portfolio" aria-current={current ? undefined : 'page'}>All work <span>{site.projects.length}</span></a>
+    </li>
+    {
+      categories.map((category) => (
+        <li>
+          <a href={category.href} aria-current={current === category.slug ? 'page' : undefined}>
+            {category.label} <span>{projectsInCategory(category.slug).length}</span>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</nav>

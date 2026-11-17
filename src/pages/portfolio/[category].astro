@@ -1,0 +1,12 @@
+---
+import ArchivePage from '../../components/ArchivePage.astro';
+import { site } from '../../lib/content';
+
+export function getStaticPaths() {
+  return site.categories.map((category) => ({ params: { category: category.slug }, props: { category } }));
+}
+
+const { category } = Astro.props;
+---
+
+<ArchivePage kind="category" term={category} />

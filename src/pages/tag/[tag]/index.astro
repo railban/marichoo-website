@@ -1,0 +1,12 @@
+---
+import ArchivePage from '../../../components/ArchivePage.astro';
+import { site } from '../../../lib/content';
+
+export function getStaticPaths() {
+  return site.tags.map((tag) => ({ params: { tag: tag.slug }, props: { tag } }));
+}
+
+const { tag } = Astro.props;
+---
+
+<ArchivePage kind="tag" term={tag} />

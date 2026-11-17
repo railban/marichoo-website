@@ -1,0 +1,18 @@
+---
+import { clientLogos } from '../lib/content';
+import { responsive } from '../lib/images';
+
+const logos = await Promise.all(clientLogos.map(async (logo) => ({ ...logo, image: await responsive(logo.src, 400) })));
+---
+
+<ul class="logo-wall reveal">
+  {
+    logos.map((logo) =>
+      logo.image ? (
+        <li>
+          <img src={logo.image.src} srcset={logo.image.srcset} sizes="180px" width={logo.image.width} height={logo.image.height} alt={logo.name} loading="lazy" decoding="async" />
+        </li>
+      ) : null,
+    )
+  }
+</ul>

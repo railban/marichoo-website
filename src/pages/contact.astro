@@ -1,0 +1,57 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHeader from '../components/PageHeader.astro';
+import { emailLink, pageSchema, pageSeo, person, site, social } from '../lib/content';
+import { responsive } from '../lib/images';
+
+// Ways to reach Marichoo, shown as a list under the email address.
+const CHANNELS = [
+  { label: 'WhatsApp', href: 'https://wa.me/385995148224?text=Hello%20Marichoo', note: 'Quick questions' },
+  ...social
+    .filter((item) => ['Instagram', 'LinkedIn', 'Behance', 'Facebook'].includes(item.label))
+    .map((item) => ({
+      label: item.label,
+      href: item.href,
+      note: { Instagram: 'Work & projects', LinkedIn: 'CV & experience', Behance: 'Portfolio', Facebook: 'Work & projects' }[item.label] ?? '',
+    })),
+];
+
+const seo = pageSeo.contact;
+const photo = await responsive('/media/Marija-Knezic-Marichoo-Illustrations.jpg', 1200);
+---
+
+<Base title={seo.title} description={seo.description} image={site.pages.contact.image?.src} schema={[pageSchema('contact')]}>
+  <div class="contact section-inner">
+    <div class="contact-text">
+      <PageHeader
+        title="Get in touch"
+        eyebrow={[{ label: 'Let’s work together' }]}
+        lead="Have a project in mind? Write a few lines about it, and Marichoo will get back to you about illustration, graphic design or a creative idea."
+      />
+      <p class="contact-email rise" style="--i: 3">
+        <a href={emailLink}>{person.email}</a>
+      </p>
+      <ul class="channel-list rise" style="--i: 4">
+        {
+          CHANNELS.map((channel) => (
+            <li>
+              <a href={channel.href} target="_blank" rel="noopener me">
+                <span class="channel-name">{channel.label}</span>
+                <span class="channel-note">{channel.note}</span>
+                <span class="channel-arrow" aria-hidden="true">↗</span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <p class="contact-sign rise" style="--i: 5">Marija Knezić Banožić, “Marichoo”</p>
+    </div>
+    {
+      photo && (
+        <figure class="contact-photo">
+          <img src={photo.src} srcset={photo.srcset} sizes="(min-width: 1000px) 40vw, 90vw" width={photo.width} height={photo.height} alt={`${person.name} drawing on an iPad. Photo: Pia Sommer`} fetchpriority="high" decoding="async" />
+        </figure>
+      )
+    }
+  </div>
+</Base>

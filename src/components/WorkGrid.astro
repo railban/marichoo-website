@@ -1,0 +1,46 @@
+---
+import type { Project } from '../lib/content';
+import { responsive } from '../lib/images';
+
+interface Props {
+  projects: Project[];
+  /** Show the project's category under its title; off where the whole grid is one category. */
+  showCategory?: boolean;
+  /** How many images at the top load straight away instead of lazily. */
+  eager?: number;
+}
+const { projects, showCategory = true, eager = 0 } = Astro.props;
+const items = await Promise.all(
+  projects.map(async (project) => ({ project, image: await responsive(project.image?.src, 900) })),
+);
+---
+
+<ul class="work-grid">
+  {
+    items.map(({ project, image }, index) => (
+      <li class="work-item reveal">
+        <a href={`/${project.slug}`}>
+          <span class="work-image">
+            {image && (
+              <img
+                src={image.src}
+                srcset={image.srcset}
+                sizes="(min-width: 1000px) 30vw, (min-width: 700px) 45vw, 90vw"
+                width={image.width}
+                height={image.height}
+                alt={project.image?.alt || project.title}
+                loading={index < eager ? 'eager' : 'lazy'}
+                fetchpriority={index === 0 && eager > 0 ? 'high' : undefined}
+                decoding="async"
+              />
+            )}
+          </span>
+          <span class="work-caption">
+            <span class="work-title">{project.title}</span>
+            {showCategory && <span class="work-kind">{project.categories[0]?.name}</span>}
+          </span>
+        </a>
+      </li>
+    ))
+  }
+</ul>

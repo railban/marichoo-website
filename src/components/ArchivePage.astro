@@ -1,0 +1,59 @@
+---
+import Base from '../layouts/Base.astro';
+import CategoryNav from './CategoryNav.astro';
+import PageHeader from './PageHeader.astro';
+import WorkGrid from './WorkGrid.astro';
+import { categorySeo, projectsInCategory, projectsWithTag, SITE_NAME, SITE_URL } from '../lib/content';
+import type { Term } from '../lib/content';
+
+interface Props {
+  kind: 'category' | 'tag';
+  term: Term;
+}
+const { kind, term } = Astro.props;
+const all = kind === 'category' ? projectsInCategory(term.slug) : projectsWithTag(term.slug);
+
+const title =
+  kind === 'category'
+    ? `${term.name} Portfolio | ${SITE_NAME}`
+    : `${term.name} | ${SITE_NAME}`;
+const intro =
+  (kind === 'category' && categorySeo[term.slug]) ||
+  `${term.name} work by Marichoo (Marija Knezić Banožić), illustrator and graphic designer. ${all.length} projects.`;
+const description = intro;
+const url = `${SITE_URL}${kind === 'category' ? `/portfolio/${term.slug}` : `/tag/${term.slug}`}`;
+const schema = [
+  {
+    '@type': 'CollectionPage',
+    '@id': `${url}#webpage`,
+    url,
+    name: title,
+    description,
+    isPartOf: { '@id': `${SITE_URL}/#website` },
+    mainEntity: {
+      '@type': 'ItemList',
+      itemListElement: all.map((project, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        url: `${SITE_URL}/${project.slug}`,
+        name: project.title,
+      })),
+    },
+  },
+];
+const count = `${all.length} ${all.length === 1 ? 'project' : 'projects'}`;
+const eyebrow =
+  kind === 'category'
+    ? [{ label: 'Portfolio', href: '/portfolio' }, { label: count }]
+    : [{ label: 'Portfolio', href: '/portfolio' }, { label: 'Theme' }];
+const lead = kind === 'category' ? intro : `${count} about ${term.name.toLowerCase()}.`;
+---
+
+<Base title={title} description={description} image={all[0]?.image?.src} schema={schema} noindex={kind === 'tag'}>
+  <PageHeader title={term.name} eyebrow={eyebrow} lead={lead}>
+    <CategoryNav current={kind === 'category' ? term.slug : undefined} />
+  </PageHeader>
+  <section class="archive-list section-inner" aria-label={`${term.name} projects`}>
+    <WorkGrid projects={all} showCategory={kind === 'tag'} eager={3} />
+  </section>
+</Base>

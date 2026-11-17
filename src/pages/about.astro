@@ -1,0 +1,9 @@
+---
+import StaticPage from '../components/StaticPage.astro';
+import { person } from '../lib/content';
+---
+<StaticPage
+  pageKey="about"
+  eyebrow="Illustrator, graphic designer & artist"
+  heroImage={{ src: '/media/Marija-Knezic-Marichoo-Illustrations.jpg', alt: `${person.name} drawing on an iPad. Photo: Pia Sommer` }}
+/>

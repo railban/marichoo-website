@@ -1,0 +1,53 @@
+---
+import Base from '../../layouts/Base.astro';
+import CategoryNav from '../../components/CategoryNav.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import WorkGrid from '../../components/WorkGrid.astro';
+import { categories, pageSchema, pageSeo, projectsInCategory, site, tagCloud } from '../../lib/content';
+
+// How many projects each section shows before "See all".
+const PER_SECTION = 6;
+
+const seo = pageSeo.portfolio;
+const sections = categories.map((category) => {
+  const all = projectsInCategory(category.slug);
+  return { ...category, total: all.length, projects: all.slice(0, PER_SECTION) };
+});
+---
+
+<Base title={seo.title} description={seo.description} image={site.pages.portfolio.image?.src} type="website" schema={[pageSchema('portfolio')]}>
+  <PageHeader
+    title="Portfolio"
+    eyebrow={[{ label: `${site.projects.length} projects` }]}
+    lead="Editorial and fashion illustration, graphic design for brands, and art installations."
+  >
+    <CategoryNav />
+  </PageHeader>
+
+  {
+    sections.map((section, index) => (
+      <section class="portfolio-section section-inner" aria-labelledby={`section-${section.slug}`}>
+        <div class="section-head">
+          <h2 id={`section-${section.slug}`} class="section-title">{section.label}</h2>
+          <a class="text-link" href={section.href}>See all {section.total}</a>
+        </div>
+        <WorkGrid projects={section.projects} showCategory={false} eager={index === 0 ? 3 : 0} />
+      </section>
+    ))
+  }
+
+  <section class="portfolio-themes section-inner" aria-labelledby="themes-title">
+    <h2 id="themes-title" class="section-title">Browse by theme</h2>
+    <ul class="pill-list reveal">
+      {
+        tagCloud.map((tag) => (
+          <li>
+            <a class="pill" href={`/tag/${tag.slug}`}>
+              {tag.name} <span>{tag.count}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+</Base>

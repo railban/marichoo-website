@@ -1,0 +1,43 @@
+---
+import Instagram from './icons/Instagram.astro';
+import Facebook from './icons/Facebook.astro';
+import X from './icons/X.astro';
+import LinkedIn from './icons/LinkedIn.astro';
+import Pinterest from './icons/Pinterest.astro';
+import Dribbble from './icons/Dribbble.astro';
+import Behance from './icons/Behance.astro';
+import { social } from '../lib/content';
+
+const icons: Record<string, any> = {
+  Instagram,
+  Facebook,
+  X,
+  LinkedIn,
+  Pinterest,
+  Dribbble,
+  Behance,
+};
+
+interface Props {
+  label: string;
+}
+const { label } = Astro.props;
+---
+
+<nav class="social" aria-label={label}>
+  <ul>
+    {
+      social.map((item) => {
+        const Icon = icons[item.label];
+        return (
+          <li>
+            <a href={item.href} target="_blank" rel="noopener me">
+              <span class="screen-reader-text">{item.label}</span>
+              {Icon && <Icon />}
+            </a>
+          </li>
+        );
+      })
+    }
+  </ul>
+</nav>

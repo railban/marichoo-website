@@ -1,0 +1,29 @@
+---
+import type { ImageAsset } from '../lib/content';
+import { responsive } from '../lib/images';
+
+interface Props {
+  image: ImageAsset | null;
+  /** Used when the image has no alt text of its own. */
+  alt: string;
+}
+const { image, alt } = Astro.props;
+const picture = await responsive(image?.src, 2000);
+---
+
+{
+  picture && (
+    <figure class="featured-media section-inner">
+      <img
+        src={picture.src}
+        srcset={picture.srcset}
+        sizes="(min-width: 1100px) 1000px, calc(100vw - 32px)"
+        width={picture.width}
+        height={picture.height}
+        alt={image?.alt || alt}
+        fetchpriority="high"
+        decoding="async"
+      />
+    </figure>
+  )
+}

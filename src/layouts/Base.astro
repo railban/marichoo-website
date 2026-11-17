@@ -1,0 +1,102 @@
+---
+import '@fontsource/gloock/400.css';
+import '@fontsource-variable/figtree/wght.css';
+import '@fontsource-variable/figtree/wght-italic.css';
+import fontDisplay from '@fontsource/gloock/files/gloock-latin-400-normal.woff2?url';
+import fontBody from '@fontsource-variable/figtree/files/figtree-latin-wght-normal.woff2?url';
+import SiteHeader from '../components/SiteHeader.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import { cleanPath, person, site, social, SITE_NAME, SITE_URL } from '../lib/content';
+import { socialImage } from '../lib/images';
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description: string;
+  image?: string;
+  imageAlt?: string;
+  type?: 'website' | 'article' | 'profile';
+  noindex?: boolean;
+  published?: string;
+  /** Extra schema.org nodes for this page; the site-wide WebSite and Person nodes are always added. */
+  schema?: Record<string, unknown>[];
+}
+const { title, description, image, imageAlt, type = 'website', noindex = false, published, schema = [] } = Astro.props;
+const canonical = new URL(cleanPath(Astro.url.pathname), SITE_URL).toString();
+const og = (await socialImage(image)) ?? (await socialImage(site.pages.home.image?.src));
+const ogImage = og ? new URL(og.src, SITE_URL).toString() : undefined;
+const portrait = await socialImage(site.pages.home.image?.src);
+
+const graph = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'WebSite',
+      '@id': `${SITE_URL}/#website`,
+      url: `${SITE_URL}/`,
+      name: SITE_NAME,
+      inLanguage: 'en',
+      publisher: { '@id': `${SITE_URL}/#person` },
+    },
+    {
+      '@type': 'Person',
+      '@id': `${SITE_URL}/#person`,
+      name: person.name,
+      alternateName: person.alternateName,
+      jobTitle: person.jobTitle,
+      email: `mailto:${person.email}`,
+      url: `${SITE_URL}/`,
+      image: portrait ? new URL(portrait.src, SITE_URL).toString() : undefined,
+      address: { '@type': 'PostalAddress', addressCountry: person.country },
+      knowsAbout: ['Illustration', 'Editorial illustration', 'Fashion illustration', 'Graphic design', 'Branding', 'Art direction'],
+      sameAs: social.map((item) => item.href),
+    },
+    ...schema,
+  ],
+};
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex, follow" />}
+    <meta name="author" content={person.name} />
+    <meta name="theme-color" content="#fffaf7" />
+
+    <meta property="og:site_name" content={SITE_NAME} />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:type" content={type} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    {ogImage && <meta property="og:image" content={ogImage} />}
+    {og && <meta property="og:image:width" content={String(og.width)} />}
+    {og && <meta property="og:image:height" content={String(og.height)} />}
+    {ogImage && <meta property="og:image:alt" content={imageAlt || title} />}
+    {published && <meta property="article:published_time" content={published} />}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@themarichoo" />
+
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <link rel="preload" href={fontDisplay} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={fontBody} as="font" type="font/woff2" crossorigin />
+    <script type="application/ld+json" set:html={JSON.stringify(graph)} />
+  </head>
+  <body>
+    <a class="skip-link" href="#site-content">Skip to the content</a>
+    <SiteHeader />
+    <main id="site-content">
+      <slot />
+    </main>
+    <SiteFooter />
+  </body>
+</html>

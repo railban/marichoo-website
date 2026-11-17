@@ -1,0 +1,31 @@
+---
+interface Crumb {
+  label: string;
+  href?: string;
+}
+interface Props {
+  title: string;
+  /** Small line above the title; items with a link become a breadcrumb. */
+  eyebrow?: Crumb[];
+  lead?: string;
+}
+const { title, eyebrow = [], lead } = Astro.props;
+---
+
+<header class="page-header section-inner">
+  {
+    eyebrow.length > 0 && (
+      <p class="eyebrow rise" style="--i: 0">
+        {eyebrow.map((crumb, index) => (
+          <>
+            {index > 0 && <span class="crumb-sep" aria-hidden="true">/</span>}
+            {crumb.href ? <a href={crumb.href}>{crumb.label}</a> : <span>{crumb.label}</span>}
+          </>
+        ))}
+      </p>
+    )
+  }
+  <h1 class="page-title rise" style="--i: 1">{title}</h1>
+  {lead && <p class="page-lead rise" style="--i: 2">{lead}</p>}
+  <slot />
+</header>

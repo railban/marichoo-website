@@ -1,0 +1,6 @@
+# The rules for all bots and AI crawlers are added in front of this file by
+# Cloudflare ("Managed robots.txt" in the Cloudflare dashboard).
+# If that setting is ever turned off, add them back here.
+
+Sitemap: https://marichoo.com/sitemap-index.xml
+Sitemap: https://marichoo.com/sitemap-images.xml

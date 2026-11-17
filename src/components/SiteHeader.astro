@@ -1,0 +1,129 @@
+---
+import SocialLinks from './SocialLinks.astro';
+import Wordmark from './Wordmark.astro';
+import { cleanPath, nav, SITE_NAME } from '../lib/content';
+
+const path = cleanPath(Astro.url.pathname);
+function active(href: string) {
+  if (href === '/') return path === '/';
+  return path === href || path.startsWith(`${href}/`);
+}
+// The wordmark already links home, so the bar leaves "Home" out.
+const links = nav.filter((item) => item.href !== '/');
+---
+
+<header id="site-header" class="site-header">
+  <div class="header-inner section-inner">
+    <a class="wordmark" href="/" aria-label={`${SITE_NAME} – home`}><Wordmark /></a>
+    <nav class="primary-nav" aria-label="Horizontal">
+      <ul>
+        {
+          links.map((item) => (
+            <li class:list={[{ 'has-children': item.children }]}>
+              <a href={item.href} aria-current={active(item.href) && !item.children ? 'page' : undefined} class:list={[{ 'is-active': active(item.href) }]}>
+                {item.label}
+                {item.children && (
+                  <svg class="chevron" aria-hidden="true" viewBox="0 0 14 9" width="11" height="7">
+                    <path d="M1 1l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.6" />
+                  </svg>
+                )}
+              </a>
+              {item.children && (
+                <ul class="sub-menu">
+                  {item.children.map((child) => (
+                    <li>
+                      <a href={child.href} aria-current={active(child.href) ? 'page' : undefined}>
+                        {child.label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="menu-modal" data-menu-open>
+      <span class="screen-reader-text">Menu</span>
+      <span class="burger" aria-hidden="true"></span>
+    </button>
+  </div>
+</header>
+
+<div id="menu-modal" class="menu-modal" role="dialog" aria-modal="true" aria-label="Menu" hidden>
+  <div class="menu-modal-inner section-inner">
+    <div class="menu-modal-top">
+      <a class="wordmark" href="/" aria-label={`${SITE_NAME} – home`}><Wordmark /></a>
+      <button class="close-menu" type="button" data-menu-close>
+        Close
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+    <nav aria-label="Expanded">
+      <ul class="modal-menu">
+        {
+          nav.map((item) => (
+            <li>
+              <a href={item.href} aria-current={active(item.href) && !item.children ? 'page' : undefined}>{item.label}</a>
+              {item.children && (
+                <ul>
+                  {item.children.map((child) => (
+                    <li>
+                      <a href={child.href} aria-current={active(child.href) ? 'page' : undefined}>{child.label}</a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+    <SocialLinks label="Expanded Social links" />
+  </div>
+</div>
+
+<script>
+  const modal = document.querySelector<HTMLElement>('#menu-modal');
+  const opener = document.querySelector<HTMLButtonElement>('[data-menu-open]');
+  const closer = document.querySelector<HTMLButtonElement>('[data-menu-close]');
+
+  function focusables() {
+    return modal ? [...modal.querySelectorAll<HTMLElement>('a[href], button')] : [];
+  }
+
+  function setOpen(open: boolean) {
+    if (!modal) return;
+    modal.hidden = !open;
+    document.body.classList.toggle('menu-open', open);
+    opener?.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (open) closer?.focus();
+    else opener?.focus();
+  }
+
+  opener?.addEventListener('click', () => setOpen(true));
+  closer?.addEventListener('click', () => setOpen(false));
+  modal?.addEventListener('click', (event) => {
+    if (event.target instanceof HTMLAnchorElement) setOpen(false);
+  });
+  document.addEventListener('keydown', (event) => {
+    if (!modal || modal.hidden) return;
+    if (event.key === 'Escape') {
+      setOpen(false);
+      return;
+    }
+    if (event.key !== 'Tab') return;
+    // Keep keyboard focus inside the open menu.
+    const items = focusables();
+    const first = items[0];
+    const last = items[items.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  });
+</script>

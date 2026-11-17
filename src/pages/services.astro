@@ -1,0 +1,97 @@
+---
+import Base from '../layouts/Base.astro';
+import LogoWall from '../components/LogoWall.astro';
+import PageHeader from '../components/PageHeader.astro';
+import { pageSchema, pageSeo, site } from '../lib/content';
+import { responsive } from '../lib/images';
+
+// What Marichoo offers. Each group links to matching work; the picture is one example from it.
+const SERVICES = [
+  {
+    title: 'Illustration',
+    text: 'Pictures that tell a story: for magazine articles, book covers, fashion and campaigns.',
+    items: ['Editorial', 'Book', 'Cover', 'Fashion', 'Storyboard', 'Vector', 'Drawing', 'Commission'],
+    href: '/portfolio/illustration',
+    link: 'See illustrations',
+    image: '/media/Gucci-Bloom-Fashion-Illustration.png',
+    alt: 'Gucci Bloom fashion illustration: a young woman with a fringe and pearl earrings beside the perfume bottle, on a floral background',
+  },
+  {
+    title: 'Graphic design',
+    text: 'Clear, friendly design for print and screen, from a single flyer to a whole visual identity.',
+    items: ['Ads', 'Logo', 'Posters', 'Brochures', 'Flyers', 'Business cards', 'Visual identity', 'Branding', 'Product design', 'Print & digital'],
+    href: '/portfolio/graphic-design',
+    link: 'See graphic design',
+    image: '/media/Graphic-Design_GÜ_Hugs_03.jpg',
+    alt: 'Gegenüber campaign poster “We Will Hug Again. Soon!” in the store window: a woman in a green parka hugging herself',
+  },
+  {
+    title: 'Creativity',
+    text: 'Ideas first: concepts, art direction and words that make a brand feel like itself.',
+    items: ['Re/branding', 'Art direction', 'Visual identity', 'Copywriting', 'Creative visual CV', 'Ideas & concepts', 'Social media ads'],
+    href: '/contact',
+    link: 'Talk about an idea',
+    image: '/media/Shuffle-04-Installation-Illustration-copy.jpg',
+    alt: 'Shuffle art installation detail: cut-out drawings of a woman eating spaghetti, a hummingbird and a pair of eyes peeking over a wall',
+  },
+];
+
+// How a project runs, in Marija's own description of her process.
+const STEPS = [
+  { title: 'Brief & words', text: 'Every project starts with a lot of writing: ideas, thoughts and keywords around your brief.' },
+  { title: 'Sketches', text: 'The words turn into a final idea and first sketches, which we look at together.' },
+  { title: 'Final artwork', text: 'The chosen sketch becomes the finished illustration or design, ready for print or screen.' },
+];
+
+const seo = pageSeo.services;
+const services = await Promise.all(SERVICES.map(async (service) => ({ ...service, picture: await responsive(service.image, 1000) })));
+---
+
+<Base title={seo.title} description={seo.description} image={site.pages.services.image?.src} schema={[pageSchema('services')]}>
+  <PageHeader
+    title="Services"
+    eyebrow={[{ label: '15+ years of agency & freelance work' }]}
+    lead="Marichoo can make your project or product outstanding with great design: illustration, graphic design and creativity."
+  />
+
+  <section class="service-list section-inner" aria-label="Services">
+    {
+      services.map((service, index) => (
+        <article class:list={['service', 'reveal', { flip: index % 2 === 1 }]}>
+          {service.picture && (
+            <figure class="service-image">
+              <img src={service.picture.src} srcset={service.picture.srcset} sizes="(min-width: 1000px) 40vw, 90vw" width={service.picture.width} height={service.picture.height} alt={service.alt} loading={index === 0 ? 'eager' : 'lazy'} decoding="async" />
+            </figure>
+          )}
+          <div class="service-text">
+            <h2 class="section-title">{service.title}</h2>
+            <p>{service.text}</p>
+            <ul class="pill-list">
+              {service.items.map((item) => <li class="pill">{item}</li>)}
+            </ul>
+            <a class="text-link" href={service.href}>{service.link}</a>
+          </div>
+        </article>
+      ))
+    }
+  </section>
+
+  <section class="process section-inner" aria-labelledby="process-title">
+    <h2 id="process-title" class="section-title">How a project works</h2>
+    <ol class="process-steps">
+      {
+        STEPS.map((step) => (
+          <li class="reveal">
+            <h3>{step.title}</h3>
+            <p>{step.text}</p>
+          </li>
+        ))
+      }
+    </ol>
+  </section>
+
+  <section class="clients section-inner" aria-labelledby="clients-title">
+    <h2 id="clients-title" class="section-title">Clients &amp; brands</h2>
+    <LogoWall />
+  </section>
+</Base>

@@ -1,0 +1,163 @@
+---
+import Base from '../layouts/Base.astro';
+import FeaturedImage from '../components/FeaturedImage.astro';
+import PageHeader from '../components/PageHeader.astro';
+import { descriptionFor, neighbors, plainText, projectDescription, site, SITE_NAME, SITE_URL } from '../lib/content';
+import type { PageRecord, Project } from '../lib/content';
+import { optimizeHtml, responsive, socialImage } from '../lib/images';
+
+export function getStaticPaths() {
+  const reserved = new Set(['portfolio', 'about', 'services', 'contact', 'tag', '404']);
+  const projectPaths = site.projects
+    .filter((project) => !reserved.has(project.slug))
+    .map((project) => ({
+      params: { slug: project.slug },
+      props: { kind: 'project' as const, project, page: null as PageRecord | null },
+    }));
+  const extraPaths = site.extraPages
+    .filter((page) => !reserved.has(page.slug) && !site.projects.some((project) => project.slug === page.slug))
+    .map((page) => ({
+      params: { slug: page.slug },
+      props: { kind: 'page' as const, project: null as Project | null, page },
+    }));
+  return [...extraPaths, ...projectPaths];
+}
+
+const { kind, project, page } = Astro.props;
+const record = (project ?? page)!;
+const content = await optimizeHtml(record.content, record.title);
+// Many projects repeat their cover inside the text; show it on its own only when that picture isn't already there.
+// Files are compared by name, ignoring WordPress size suffixes like "-1024x768".
+const baseName = (src: string) =>
+  decodeURIComponent(src.split('/').pop() ?? '')
+    .replace(/\.[a-z0-9]+$/i, '')
+    .replace(/-\d+x\d+$/, '')
+    .toLowerCase();
+const coverName = record.image ? baseName(record.image.src) : '';
+const showCover =
+  !!coverName &&
+  ![...record.content.matchAll(/<img\b[^>]*\bsrc="([^"]+)"/g)].some((match) => baseName(match[1]) === coverName);
+const adjacent = project ? neighbors(project.slug) : null;
+const pager = await Promise.all(
+  [adjacent?.previous, adjacent?.next].map(async (item) =>
+    item ? { item, image: await responsive(item.image?.src, 800) } : null,
+  ),
+);
+
+const url = `${SITE_URL}/${record.slug}`;
+const category = project?.categories[0];
+const artwork = project?.image ? await socialImage(project.image.src) : null;
+// Every picture of the project with its description and author, so search engines and AI crawlers can credit it.
+const pictures = project
+  ? [
+      ...(artwork ? [{ url: new URL(artwork.src, SITE_URL).toString(), alt: project.image?.alt, width: artwork.width, height: artwork.height }] : []),
+      ...(await Promise.all(
+        [...project.content.matchAll(/<img\b[^>]*>/g)].map(async ([tag]) => {
+          const src = tag.match(/\bsrc="([^"]+)"/)?.[1];
+          if (!src || src === project.image?.src) return null;
+          const image = await responsive(src);
+          const alt = plainText(tag.match(/\balt="([^"]*)"/)?.[1] ?? '');
+          return { url: new URL(image?.src ?? src, SITE_URL).toString(), alt, width: image?.width, height: image?.height };
+        }),
+      )),
+    ].filter((picture) => picture !== null)
+  : [];
+const imageObjects = pictures.map((picture) => ({
+  '@type': 'ImageObject',
+  contentUrl: picture.url,
+  caption: picture.alt || project?.title,
+  width: picture.width,
+  height: picture.height,
+  creator: { '@id': `${SITE_URL}/#person` },
+  creditText: 'Marichoo',
+}));
+const schema = project
+  ? [
+      {
+        '@type': category?.slug === 'graphic-design' ? 'CreativeWork' : 'VisualArtwork',
+        '@id': `${url}#work`,
+        name: project.title,
+        url,
+        description: projectDescription(project),
+        image: imageObjects.length > 0 ? imageObjects : undefined,
+        dateCreated: project.date.slice(0, 10),
+        creator: { '@id': `${SITE_URL}/#person` },
+        genre: project.categories.map((item) => item.name),
+        keywords: project.tags.map((tag) => tag.name).join(', '),
+        isPartOf: { '@id': `${SITE_URL}/#website` },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Portfolio', item: `${SITE_URL}/portfolio` },
+          ...(category
+            ? [{ '@type': 'ListItem', position: 2, name: category.name, item: `${SITE_URL}/portfolio/${category.slug}` }]
+            : []),
+          { '@type': 'ListItem', position: category ? 3 : 2, name: project.title },
+        ],
+      },
+    ]
+  : [];
+---
+
+<Base
+  title={`${record.title} | ${SITE_NAME}`}
+  description={project ? projectDescription(project) : descriptionFor(record.title, record.content)}
+  image={record.image?.src}
+  imageAlt={record.image?.alt || record.title}
+  type={kind === 'project' ? 'article' : 'website'}
+  published={project?.date}
+  schema={schema}
+>
+  <article class="project">
+    <PageHeader
+      title={record.title}
+      lead={project?.summary}
+      eyebrow={[{ label: 'Portfolio', href: '/portfolio' }, ...(category ? [{ label: category.name, href: `/portfolio/${category.slug}` }] : [])]}
+    >
+      {project && (
+        <dl class="project-meta rise" style="--i: 2">
+          {project.categories.length > 0 && (
+            <div>
+              <dt>Field</dt>
+              <dd>
+                {project.categories.map((item, index) => <>{index > 0 && ', '}<a href={`/portfolio/${item.slug}`}>{item.name}</a></>)}
+              </dd>
+            </div>
+          )}
+          {project.tags.length > 0 && (
+            <div>
+              <dt>Themes</dt>
+              <dd>
+                {project.tags.map((tag, index) => <>{index > 0 && ', '}<a href={`/tag/${tag.slug}`}>{tag.name}</a></>)}
+              </dd>
+            </div>
+          )}
+        </dl>
+      )}
+    </PageHeader>
+    {showCover && <FeaturedImage image={record.image} alt={record.title} />}
+    {record.content && <div class="entry-content project-content" set:html={content} />}
+    {project && (
+      <nav class="project-pager section-inner" aria-label="More projects">
+        {pager.map((entry, index) =>
+          entry ? (
+            <a class:list={['pager-card', index === 0 ? 'previous' : 'next']} href={`/${entry.item.slug}`}>
+              <span class="pager-image">
+                {entry.image && (
+                  <img src={entry.image.src} srcset={entry.image.srcset} sizes="(min-width: 700px) 14rem, 9rem" alt={entry.item.image?.alt || entry.item.title} loading="lazy" decoding="async" />
+                )}
+              </span>
+              <span class="pager-label">
+                <span class="eyebrow">{index === 0 ? '← Previous project' : 'Next project →'}</span>
+                <span class="pager-title">{entry.item.title}</span>
+              </span>
+            </a>
+          ) : (
+            <span />
+          ),
+        )}
+      </nav>
+    )}
+  </article>
+</Base>
